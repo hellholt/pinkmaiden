@@ -12,9 +12,9 @@ max_count = 50
 def get_object_data(object):
   key = object.get('Key', 'WTF')
   try:
-    date = key.split('/')[1].split('_')[0]
+    stamp = key.split('/')[1].split('_')[0]
   except:
-    date = 'WTF'
+    stamp = 'WTF'
   try:
     uuid = key.split('/')[1].split('_')[1].split('.')[0]
   except:
@@ -23,7 +23,7 @@ def get_object_data(object):
     'key': key,
     'thumbnail_url': f'https://{domain_name}/{key}',
     'image_url': f'https://{domain_name}/{key.replace("thumbs/", "images/")}',
-    'date': date,
+    'stamp': stamp,
     'uuid': uuid,
   }
 
@@ -31,15 +31,15 @@ def handler(event, context):
   query_params = event.get('queryStringParameters', {})
   if not query_params:
     query_params = {}
-  now = str(end_timestamp - int(datetime.now().timestamp()))
-  start_date = query_params.get('date', now)
+  checkpoint = str(end_timestamp - int(datetime.now().timestamp()))
+  checkpoint = query_params.get('checkpoint', checkpoint)
   count = int(query_params.get('count', max_count))
   count = min(count, max_count)
   response = s3_client.list_objects_v2(
     Bucket=bucket_name,
     Prefix='thumbs/',
     MaxKeys=count,
-    StartAfter=f'thumbs/{start_date}',
+    StartAfter=f'thumbs/{checkpoint}',
   )
   images = [obj for obj in response.get('Contents', [])]
   images.sort(key=lambda x: x['Key'])

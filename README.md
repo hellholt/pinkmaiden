@@ -2,6 +2,6 @@
 
 https://pnk.darkdell.net (NSFW)
 
-An infinitely scrolling image-sharing site populated from random interesting images. 
+An infinitely scrolling webpage populated with interesting images. 
 
-**Disclaimer: Not moderated or filtered.**
+**Disclaimer: Not (meaningfully) moderated or filtered.**

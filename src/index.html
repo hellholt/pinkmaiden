@@ -5,7 +5,7 @@
   <script>
     class ImageLoader {
       constructor() {
-        this.workingTimestamp = Math.floor((new Date()).getTime() / 1000);
+        this.checkpoint = Math.floor((new Date()).getTime() / 1000);
         this.isLocked = false;
         this.isDisabled = false;
       }
@@ -15,15 +15,14 @@
           return;
         }
         this.isLocked = true;
-        let fetchUrl = `/api/images?date=${this.workingTimestamp}&count=50`;
+        let fetchUrl = `/api/images?checkpoint=${this.checkpoint}&count=50`;
         try {
           let response = await fetch(fetchUrl);
           let jsonResponse = await response.json();
-          console.log(jsonResponse);
           this.checkResponse(jsonResponse.images);
           this.displayImages(jsonResponse.images);
-          this.updateTimestamp(jsonResponse.images);
-        } catch (e) {
+          this.updateCheckpoint(jsonResponse.images);
+        } catch (error) {
           console.log(`That's all, folks!`);
         } finally {
           this.isLocked = false;
@@ -49,10 +48,10 @@
         });
       }
 
-      updateTimestamp(images) {
+      updateCheckpoint(images) {
         try {
-          let lastDate = parseInt(images.slice(-1)[0].date);
-          this.workingTimestamp = Math.max(this.workingTimestamp, lastDate) + 1;
+          let checkpoint = parseInt(images.slice(-1)[0].stamp);
+          this.checkpoint = Math.max(this.checkpoint, checkpoint) + 1;
         } catch (error) {
           console.error(error);
           throw error;
@@ -74,7 +73,7 @@
 </head>
 
 <body>
-  <div id="hello_world">Hello, world!</div>
+  <h1><a href="https://github.com/ndouglas/pinkmaiden/">Pinkmaiden</a></h1>
   <div id="image_container"></div>
 </body>
 

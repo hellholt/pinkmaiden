@@ -35,22 +35,22 @@ def get_original_path(bucket_name, key):
 def get_thumbnail_path(bucket_name, key):
   return '{}/{}'.format(temporary_path, get_safe_object_key(key))
 
-def get_thumbnail_key(timestamp, file_uuid, extension):
-  return '{}{}_{}{}'.format(thumbnails_prefix, timestamp, file_uuid, extension)
+def get_thumbnail_key(stamp, file_uuid, extension):
+  return '{}{}_{}{}'.format(thumbnails_prefix, stamp, file_uuid, extension)
 
-def get_destination_key(timestamp, file_uuid, extension):
-  return '{}{}_{}{}'.format(images_prefix, timestamp, file_uuid, extension)
+def get_destination_key(stamp, file_uuid, extension):
+  return '{}{}_{}{}'.format(images_prefix, stamp, file_uuid, extension)
 
 def process_record(record):
   bucket_name = get_record_bucket_name(record)
   original_key = get_record_object_key(record)
   original_path = get_original_path(bucket_name, original_key)
   thumbnail_path = get_thumbnail_path(bucket_name, original_key)
-  timestamp = str(end_timestamp - int(datetime.now().timestamp()))
+  stamp = str(end_timestamp - int(datetime.now().timestamp()))
   file_uuid = uuid.uuid4()
   extension = os.path.splitext(original_key)[1]
-  thumbnail_key = get_thumbnail_key(timestamp, file_uuid, extension)
-  destination_key = get_destination_key(timestamp, file_uuid, extension)
+  thumbnail_key = get_thumbnail_key(stamp, file_uuid, extension)
+  destination_key = get_destination_key(stamp, file_uuid, extension)
   s3_client.download_file(bucket_name, original_key, original_path)
   mime_type = resize_image(original_path, thumbnail_path)
   s3_client.upload_file(thumbnail_path, bucket_name, thumbnail_key, ExtraArgs={'ContentType': mime_type})
