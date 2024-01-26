@@ -25,7 +25,7 @@ resource "aws_cloudfront_distribution" "cloudfront_distribution" {
   }
 
   origin {
-    domain_name = "${aws_api_gateway_rest_api.default.id}.execute-api.us-east-1.amazonaws.com"
+    domain_name = "${aws_api_gateway_rest_api.default.id}.execute-api.${var.aws_region}.amazonaws.com"
     origin_id   = local.api_origin_id
     custom_origin_config {
       http_port              = "80"

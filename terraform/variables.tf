@@ -15,3 +15,10 @@ variable "domain_name" {
   default     = "pnk.darkdell.net"
   description = "The domain name for the CloudFront distribution."
 }
+
+variable "aws_region" {
+  type        = string
+  default     = "us-east-1"
+  description = "The AWS region to deploy to."
+}
+

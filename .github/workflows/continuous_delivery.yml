@@ -14,7 +14,6 @@ jobs:
 
       - name: Build image_thumbnail lambda layer
         run: |
-          mkdir -p lambda_layer/image_thumbnail
           cd lambda_layer/image_thumbnail
           mkdir -p python
           pip3 install \
@@ -28,7 +27,6 @@ jobs:
 
       - name: Build image_api lambda layer
         run: |
-          mkdir -p lambda_layer/image_api
           cd lambda_layer/image_api
           mkdir -p python
           pip3 install \

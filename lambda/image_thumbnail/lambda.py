@@ -12,6 +12,7 @@ temporary_path = '/tmp'
 originals_prefix = 'uploads/'
 images_prefix = 'images/'
 thumbnails_prefix = 'thumbs/'
+end_timestamp = int(os.environ['END_TIMESTAMP'])
             
 def resize_image(image_path, thumbnail_path):
   with Image.open(image_path) as image:
@@ -45,7 +46,7 @@ def process_record(record):
   original_key = get_record_object_key(record)
   original_path = get_original_path(bucket_name, original_key)
   thumbnail_path = get_thumbnail_path(bucket_name, original_key)
-  timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+  timestamp = str(end_timestamp - int(datetime.now().timestamp()))
   file_uuid = uuid.uuid4()
   extension = os.path.splitext(original_key)[1]
   thumbnail_key = get_thumbnail_key(timestamp, file_uuid, extension)

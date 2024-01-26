@@ -107,8 +107,9 @@ resource "aws_lambda_function" "lambda_function" {
   layers           = [aws_lambda_layer_version.lambda_layer[each.key].arn]
   environment {
     variables = {
-      BUCKET_NAME = aws_s3_bucket.bucket.id,
-      DOMAIN_NAME = var.domain_name,
+      BUCKET_NAME   = aws_s3_bucket.bucket.id,
+      DOMAIN_NAME   = var.domain_name,
+      END_TIMESTAMP = 99991231235959,
     }
   }
 }

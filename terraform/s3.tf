@@ -36,3 +36,11 @@ resource "aws_s3_bucket_website_configuration" "website_configuration" {
   }
 
 }
+
+resource "aws_s3_object" "index" {
+  bucket       = aws_s3_bucket.bucket.id
+  key          = "index.html"
+  source       = "../src/index.html"
+  content_type = "text/html"
+  etag         = filemd5("../src/index.html")
+}
