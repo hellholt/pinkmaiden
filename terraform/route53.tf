@@ -1,9 +1,9 @@
-data "aws_route53_zone" "darkdell" {
+data "aws_route53_zone" "default" {
   name = "darkdell.net."
 }
 
-resource "aws_route53_record" "darkdell_pnk" {
-  zone_id = data.aws_route53_zone.darkdell.id
+resource "aws_route53_record" "default" {
+  zone_id = data.aws_route53_zone.default.id
   name    = var.domain_name
   type    = "A"
 

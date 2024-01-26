@@ -21,7 +21,7 @@ resource "aws_route53_record" "tls_validation_records" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = data.aws_route53_zone.darkdell.id
+  zone_id         = data.aws_route53_zone.default.id
 }
 
 resource "aws_acm_certificate_validation" "certificate_validation" {

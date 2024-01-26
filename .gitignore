@@ -193,3 +193,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ignore lambda package directories
+lambda_layer/**/python/*
