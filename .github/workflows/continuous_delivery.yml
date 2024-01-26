@@ -24,8 +24,7 @@ jobs:
             --python-version 3.9 \
             --only-binary=:all: \
             --upgrade \
-            pillow \
-            boto3
+            --requirement requirements.txt
 
       - name: Build image_api lambda layer
         run: |
@@ -39,4 +38,4 @@ jobs:
             --python-version 3.9 \
             --only-binary=:all: \
             --upgrade \
-            boto3
+            --requirement requirements.txt
