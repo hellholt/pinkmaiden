@@ -6,13 +6,12 @@ import os
 s3_client = boto3.client('s3')
 bucket_name = os.environ['BUCKET_NAME']
 domain_name = os.environ['DOMAIN_NAME']
-end_timestamp = int(os.environ['END_TIMESTAMP'])
 max_count = 50
 
 def get_object_data(object):
   key = object.get('Key', 'WTF')
   try:
-    stamp = key.split('/')[1].split('_')[0]
+    stamp = key.split('/')[1].split('-')[0]
   except:
     stamp = 'WTF'
   try:
@@ -31,8 +30,7 @@ def handler(event, context):
   query_params = event.get('queryStringParameters', {})
   if not query_params:
     query_params = {}
-  checkpoint = str(end_timestamp - int(datetime.now().timestamp()))
-  checkpoint = query_params.get('checkpoint', checkpoint)
+  checkpoint = query_params.get('checkpoint', '0')
   count = int(query_params.get('count', max_count))
   count = min(count, max_count)
   response = s3_client.list_objects_v2(

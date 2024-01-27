@@ -2,12 +2,32 @@
 <html lang="en">
 
 <head>
+  <style>
+    #gallery {
+      margin: 0 auto;
+    }
+
+    .gallery-item {
+      margin-bottom: 10px;
+    }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+  <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
   <script>
+
     class ImageLoader {
       constructor() {
-        this.checkpoint = Math.floor((new Date()).getTime() / 1000);
+        this.checkpoint = '0';
         this.isLocked = false;
         this.isDisabled = false;
+        this.$grid = $('#gallery').masonry({
+          itemSelector: '.gallery-item',
+          columnWidth: 80,
+          gutter: 10,
+          percentPosition: false,
+          stagger: 30,
+        });
       }
 
       async loadImages() {
@@ -22,6 +42,7 @@
           this.checkResponse(jsonResponse.images);
           this.displayImages(jsonResponse.images);
           this.updateCheckpoint(jsonResponse.images);
+          this.updateMasonry();
         } catch (error) {
           console.log(`That's all, folks!`);
         } finally {
@@ -29,44 +50,85 @@
         }
       }
 
+      debounce(func, wait, immediate) {
+        var timeout;
+        return function () {
+          var context = this, args = arguments;
+          var later = function () {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+          };
+          var callNow = immediate && !timeout;
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+          if (callNow) func.apply(context, args);
+        };
+      };
+
       checkResponse(images) {
         if (!images || !images.length) {
           this.isDisabled = true;
         }
       }
 
+      createImageElement(image) {
+        let divElement = document.createElement('div');
+        divElement.className = 'gallery-item';
+        let imageElement = document.createElement('img');
+        imageElement.style.width = '100%';
+        imageElement.style.height = 'auto';
+        imageElement.src = image.thumbnail_url;
+        let linkElement = document.createElement('a');
+        linkElement.href = image.image_url;
+        linkElement.target = '_blank';
+        linkElement.appendChild(imageElement);
+        divElement.appendChild(linkElement);
+        return divElement;
+      }
+
       displayImages(images) {
-        let imageContainer = document.getElementById('image_container');
+        let newElements = [];
+        let imageContainer = document.getElementById('gallery');
         images.forEach(image => {
-          let imageElement = document.createElement('img');
-          imageElement.src = image.thumbnail_url;
-          let linkElement = document.createElement('a');
-          linkElement.href = image.image_url;
-          linkElement.target = '_blank';
-          linkElement.appendChild(imageElement);
-          imageContainer.appendChild(linkElement);
+          let divElement = this.createImageElement(image);
+          imageContainer.appendChild(divElement);
+          newElements.push(divElement);
         });
+        this.updateMasonry(newElements);
       }
 
       updateCheckpoint(images) {
         try {
-          let checkpoint = parseInt(images.slice(-1)[0].stamp);
-          this.checkpoint = Math.max(this.checkpoint, checkpoint) + 1;
+          let lastImage = images.slice(-1)[0];
+          this.checkpoint = `${lastImage.stamp}Z`;
         } catch (error) {
           console.error(error);
           throw error;
         }
+      }
+
+      updateMasonry(newElements) {
+        let $newElements = $(newElements);
+        this.$grid.append($newElements)
+        this.$grid.imagesLoaded(() => {
+          this.$grid.masonry('appended', $newElements);
+          this.$grid.masonry('layout');
+        });
       }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       const imageLoader = new ImageLoader();
       imageLoader.loadImages();
-      window.onscroll = () => {
-        if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+      window.onscroll = imageLoader.debounce(() => {
+        const scrolledFromTop = window.scrollY;
+        const viewportHeight = window.innerHeight;
+        const totalHeightOfDocument = document.body.offsetHeight;
+        const threshold = viewportHeight * 0.5;
+        if (scrolledFromTop + viewportHeight + threshold >= totalHeightOfDocument) {
           imageLoader.loadImages();
         }
-      };
+      }, 50);
     });
   </script>
 
@@ -74,7 +136,7 @@
 
 <body>
   <h1><a href="https://github.com/ndouglas/pinkmaiden/">Pinkmaiden</a></h1>
-  <div id="image_container"></div>
+  <div id="gallery"></div>
 </body>
 
 </html>
