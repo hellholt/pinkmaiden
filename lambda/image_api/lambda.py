@@ -6,7 +6,7 @@ import os
 s3_client = boto3.client('s3')
 bucket_name = os.environ['BUCKET_NAME']
 domain_name = os.environ['DOMAIN_NAME']
-max_count = 50
+max_count = 100
 
 def get_object_data(object):
   key = object.get('Key', 'WTF')

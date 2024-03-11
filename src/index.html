@@ -21,12 +21,12 @@
         this.checkpoint = '0';
         this.isLocked = false;
         this.isDisabled = false;
+        this.count = 100;
         this.$grid = $('#gallery').masonry({
           itemSelector: '.gallery-item',
           columnWidth: 80,
           gutter: 10,
           percentPosition: false,
-          stagger: 30,
         });
       }
 
@@ -35,14 +35,13 @@
           return;
         }
         this.isLocked = true;
-        let fetchUrl = `/api/images?checkpoint=${this.checkpoint}&count=50`;
+        let fetchUrl = `/api/images?checkpoint=${this.checkpoint}&count=${this.count}`;
         try {
           let response = await fetch(fetchUrl);
           let jsonResponse = await response.json();
           this.checkResponse(jsonResponse.images);
           this.displayImages(jsonResponse.images);
           this.updateCheckpoint(jsonResponse.images);
-          this.updateMasonry();
         } catch (error) {
           console.log(`That's all, folks!`);
         } finally {
@@ -109,10 +108,12 @@
 
       updateMasonry(newElements) {
         let $newElements = $(newElements);
+        $newElements.css('opacity', 0);
         this.$grid.append($newElements)
         this.$grid.imagesLoaded(() => {
           this.$grid.masonry('appended', $newElements);
           this.$grid.masonry('layout');
+          $newElements.css('opacity', 1);
         });
       }
     }
@@ -124,7 +125,7 @@
         const scrolledFromTop = window.scrollY;
         const viewportHeight = window.innerHeight;
         const totalHeightOfDocument = document.body.offsetHeight;
-        const threshold = viewportHeight * 0.5;
+        const threshold = viewportHeight * 1.5;
         if (scrolledFromTop + viewportHeight + threshold >= totalHeightOfDocument) {
           imageLoader.loadImages();
         }
