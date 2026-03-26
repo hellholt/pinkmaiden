@@ -16,6 +16,7 @@ jobs:
           args: >-
             --dockerfile=labeler/Dockerfile
             --context=labeler
+            --custom-platform=linux/amd64
             --destination=registry.goldentooth.net/pinkmaiden-labeler:${{ github.run_number }}-${{ github.sha }}
             --destination=registry.goldentooth.net/pinkmaiden-labeler:latest
             --skip-tls-verify
