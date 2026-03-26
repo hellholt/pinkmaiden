@@ -18,4 +18,5 @@ jobs:
             --context=labeler
             --destination=registry.goldentooth.net/pinkmaiden-labeler:${{ github.run_number }}-${{ github.sha }}
             --destination=registry.goldentooth.net/pinkmaiden-labeler:latest
+            --push-retry=3
             --skip-tls-verify
