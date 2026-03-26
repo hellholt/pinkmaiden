@@ -14,6 +14,7 @@ Environment:
 import logging
 import os
 import sqlite3
+import threading
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
@@ -102,10 +103,26 @@ def get_unlabeled_images(offset: int = 0, limit: int = BATCH_SIZE):
     return [r["image_path"] for r in rows]
 
 
+indexing_complete = threading.Event()
+
+
 @app.on_event("startup")
 def startup():
     init_db()
+    thread = threading.Thread(target=_index_worker, daemon=True)
+    thread.start()
+
+
+def _index_worker():
     build_image_index()
+    indexing_complete.set()
+    log.info("Indexing complete, ready to serve.")
+
+
+@app.get("/health")
+def health():
+    """Health check — always returns 200 so probes pass during indexing."""
+    return {"status": "ok", "indexing": not indexing_complete.is_set()}
 
 
 @app.get("/", response_class=HTMLResponse)
