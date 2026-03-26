@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Labeler</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 0;
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #2a2a2a;
+    border-bottom: 1px solid #444;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .toolbar .stats {
+    font-size: 14px;
+    color: #aaa;
+  }
+
+  .toolbar .stats strong {
+    color: #e0e0e0;
+  }
+
+  .toolbar .batch-info {
+    font-size: 14px;
+    color: #f88;
+  }
+
+  .toolbar .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  button {
+    background: #444;
+    color: #e0e0e0;
+    border: 1px solid #666;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s;
+  }
+
+  button:hover { background: #555; }
+
+  button.primary {
+    background: #2d6a2d;
+    border-color: #4a4;
+  }
+
+  button.primary:hover { background: #3a8a3a; }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .cell {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: pointer;
+    border: 3px solid transparent;
+    border-radius: 2px;
+    transition: border-color 0.15s, opacity 0.15s;
+  }
+
+  .cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .cell.rejected {
+    border-color: #e44;
+    opacity: 0.4;
+  }
+
+  .cell.rejected::after {
+    content: "\2717";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 64px;
+    color: #e44;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8);
+    pointer-events: none;
+  }
+
+  .cell:hover {
+    border-color: #888;
+  }
+
+  .cell.rejected:hover {
+    border-color: #e44;
+    opacity: 0.6;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    font-size: 18px;
+    color: #888;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 80px 20px;
+    font-size: 16px;
+    color: #888;
+  }
+
+  .keyboard-help {
+    font-size: 12px;
+    color: #777;
+  }
+
+  .keyboard-help kbd {
+    background: #444;
+    border: 1px solid #666;
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: monospace;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div>
+    <div class="stats" id="stats">Loading...</div>
+    <div class="keyboard-help">
+      <kbd>Enter</kbd> submit &amp; next
+    </div>
+  </div>
+  <div class="batch-info" id="batch-info"></div>
+  <div class="actions">
+    <button onclick="loadBatch()">Refresh</button>
+    <button class="primary" onclick="submitBatch()" id="submit-btn" disabled>
+      Submit &amp; Next
+    </button>
+  </div>
+</div>
+
+<div id="grid" class="grid">
+  <div class="loading">Loading images...</div>
+</div>
+
+<script>
+  let currentBatch = [];
+  let rejected = new Set();
+
+  async function loadBatch() {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = '<div class="loading">Loading images...</div>';
+    rejected.clear();
+    updateBatchInfo();
+
+    try {
+      const resp = await fetch("/api/batch");
+      const data = await resp.json();
+      currentBatch = data.images;
+      updateStats(data.stats);
+
+      if (currentBatch.length === 0) {
+        grid.innerHTML = '<div class="empty">No more unlabeled images. Nice work!</div>';
+        document.getElementById("submit-btn").disabled = true;
+        return;
+      }
+
+      grid.innerHTML = "";
+      for (const imgPath of currentBatch) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.path = imgPath;
+        cell.addEventListener("click", () => toggleReject(cell, imgPath));
+
+        const img = document.createElement("img");
+        img.loading = "lazy";
+        img.src = `/img/${encodeURIComponent(imgPath)}?thumb=true`;
+        img.alt = imgPath;
+
+        cell.appendChild(img);
+        grid.appendChild(cell);
+      }
+
+      document.getElementById("submit-btn").disabled = false;
+    } catch (err) {
+      grid.innerHTML = `<div class="empty">Error loading images: ${err.message}</div>`;
+    }
+  }
+
+  function toggleReject(cell, path) {
+    if (rejected.has(path)) {
+      rejected.delete(path);
+      cell.classList.remove("rejected");
+    } else {
+      rejected.add(path);
+      cell.classList.add("rejected");
+    }
+    updateBatchInfo();
+  }
+
+  function updateBatchInfo() {
+    const el = document.getElementById("batch-info");
+    if (rejected.size === 0) {
+      el.textContent = "";
+    } else {
+      el.textContent = `${rejected.size} marked for rejection`;
+    }
+  }
+
+  function updateStats(stats) {
+    const el = document.getElementById("stats");
+    const pct = stats.total > 0 ? ((stats.labeled / stats.total) * 100).toFixed(1) : 0;
+    el.innerHTML = `
+      ${stats.labeled.toLocaleString()} / ${stats.total.toLocaleString()} labeled (${pct}%) |
+      Kept: <strong>${stats.kept.toLocaleString()}</strong> |
+      Rejected: <strong>${stats.rejected.toLocaleString()}</strong> |
+      Remaining: ${stats.remaining.toLocaleString()}
+    `;
+  }
+
+  async function submitBatch() {
+    if (currentBatch.length === 0) return;
+
+    const btn = document.getElementById("submit-btn");
+    btn.disabled = true;
+    btn.textContent = "Submitting...";
+
+    try {
+      const resp = await fetch("/api/label", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rejected: Array.from(rejected),
+          all: currentBatch,
+        }),
+      });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      btn.textContent = "Submit & Next";
+      await loadBatch();
+    } catch (err) {
+      alert(`Error submitting labels: ${err.message}`);
+      btn.disabled = false;
+      btn.textContent = "Submit & Next";
+    }
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      submitBatch();
+    }
+  });
+
+  loadBatch();
+</script>
+</body>
+</html>

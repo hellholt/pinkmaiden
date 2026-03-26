@@ -1,0 +1,21 @@
+name: CI Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and push Docker image
+        uses: docker://gcr.io/kaniko-project/executor:latest
+        with:
+          args: >-
+            --dockerfile=labeler/Dockerfile
+            --context=labeler
+            --destination=registry.goldentooth.net/pinkmaiden-labeler:${{ github.run_number }}-${{ github.sha }}
+            --destination=registry.goldentooth.net/pinkmaiden-labeler:latest
+            --skip-tls-verify
