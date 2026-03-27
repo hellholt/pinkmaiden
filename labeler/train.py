@@ -164,6 +164,9 @@ def main():
     print(f"  TN={cm[0,0]}  FP={cm[0,1]}")
     print(f"  FN={cm[1,0]}  TP={cm[1,1]}")
 
+    # Resolve output path early (needed for errors.json too)
+    output_path = Path(args.output)
+
     # Save misclassified images for review
     errors = {"false_positives": [], "missed_rejects": []}
     for i in range(len(y_test)):
@@ -181,7 +184,6 @@ def main():
     print(f"Errors saved to {errors_path}")
 
     # Save model
-    output_path = Path(args.output)
     with open(output_path, "wb") as f:
         pickle.dump({"classifier": clf, "clip_model": "ViT-B-32", "clip_pretrained": "laion2b_s34b_b79k"}, f)
     print(f"Model saved to {output_path}")
