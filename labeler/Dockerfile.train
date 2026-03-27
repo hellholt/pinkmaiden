@@ -9,6 +9,6 @@ WORKDIR /app
 COPY requirements-train.txt .
 RUN pip install --no-cache-dir -r requirements-train.txt
 
-COPY train.py .
+COPY train.py score.py ./
 
 ENTRYPOINT ["python", "train.py"]
