@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Errors</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a1a; color: #e0e0e0; font-family: -apple-system, sans-serif; }
+
+  .toolbar {
+    position: sticky; top: 0; z-index: 100;
+    background: #2a2a2a; border-bottom: 1px solid #444;
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+
+  .toolbar a { color: #88f; text-decoration: none; }
+  .toolbar a:hover { text-decoration: underline; }
+
+  button {
+    background: #444; color: #e0e0e0; border: 1px solid #666;
+    padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;
+  }
+  button:hover { background: #555; }
+  button.active { background: #c44; border-color: #e66; }
+
+  h2 { font-size: 16px; color: #ccc; padding: 16px 20px 8px; }
+
+  .section-info { padding: 0 20px 8px; font-size: 13px; color: #888; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 4px; padding: 4px;
+  }
+
+  .cell {
+    position: relative; aspect-ratio: 1; overflow: hidden;
+    border: 3px solid transparent; border-radius: 2px;
+    cursor: pointer;
+  }
+
+  .cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .cell .label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.7); padding: 4px 8px;
+    font-size: 11px; color: #aaa; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .cell:hover { border-color: #888; }
+
+  .fp { border-color: #c84; }
+  .fn { border-color: #c44; }
+
+  .empty { text-align: center; padding: 40px; color: #888; }
+
+  .cell.fullview {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 200; aspect-ratio: auto; border: none; border-radius: 0;
+    background: rgba(0,0,0,0.95);
+  }
+  .cell.fullview img { object-fit: contain; }
+  .cell.fullview .label { font-size: 14px; padding: 8px 16px; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a href="/">&larr; Back to labeling</a>
+  <span id="status">Loading...</span>
+</div>
+
+<h2>False Positives (good images the model would reject)</h2>
+<div class="section-info" id="fp-info"></div>
+<div class="grid" id="fp-grid"></div>
+
+<h2>Missed Rejects (bad images the model would keep)</h2>
+<div class="section-info" id="fn-info"></div>
+<div class="grid" id="fn-grid"></div>
+
+<script>
+  async function load() {
+    try {
+      const resp = await fetch("/api/errors");
+      if (!resp.ok) {
+        document.getElementById("status").textContent = "No training results found. Run training first.";
+        return;
+      }
+      const data = await resp.json();
+      const fp = data.false_positives || [];
+      const fn = data.missed_rejects || [];
+
+      document.getElementById("status").textContent =
+        `${fp.length} false positives, ${fn.length} missed rejects`;
+
+      renderGrid("fp-grid", fp, "fp");
+      document.getElementById("fp-info").textContent =
+        fp.length ? `These ${fp.length} images are fine but the model thinks they should be rejected` : "";
+
+      renderGrid("fn-grid", fn, "fn");
+      document.getElementById("fn-info").textContent =
+        fn.length ? `These ${fn.length} images are bad but the model would let them through` : "";
+
+    } catch (err) {
+      document.getElementById("status").textContent = `Error: ${err.message}`;
+    }
+  }
+
+  function renderGrid(gridId, paths, cssClass) {
+    const grid = document.getElementById(gridId);
+    if (paths.length === 0) {
+      grid.innerHTML = '<div class="empty">None!</div>';
+      return;
+    }
+    grid.innerHTML = "";
+    for (const p of paths) {
+      const cell = document.createElement("div");
+      cell.className = `cell ${cssClass}`;
+
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.src = `/img/${encodeURIComponent(p)}?thumb=true`;
+      img.alt = p;
+
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = p.split("/").pop();
+
+      cell.appendChild(img);
+      cell.appendChild(label);
+      cell.addEventListener("click", () => cell.classList.toggle("fullview"));
+      grid.appendChild(cell);
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

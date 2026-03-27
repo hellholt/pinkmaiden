@@ -183,6 +183,23 @@ def get_stats():
     return {"labeled": total, "rejected": rejected, "kept": total - rejected}
 
 
+@app.get("/api/errors")
+def get_errors():
+    """Return misclassified images from the last training run."""
+    import json as _json
+    errors_path = Path(os.environ.get("DB_PATH", "labels.db")).parent / "models" / "errors.json"
+    if not errors_path.is_file():
+        raise HTTPException(status_code=404, detail="No errors.json found. Run training first.")
+    return _json.loads(errors_path.read_text())
+
+
+@app.get("/review", response_class=HTMLResponse)
+def review_page():
+    """Page to review false positives and missed rejects."""
+    html_path = Path(__file__).parent / "static" / "review.html"
+    return HTMLResponse(html_path.read_text())
+
+
 @app.get("/api/export")
 def export_labels():
     """Export all labels as JSON for use in training."""

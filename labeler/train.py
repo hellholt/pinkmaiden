@@ -164,11 +164,27 @@ def main():
     print(f"  TN={cm[0,0]}  FP={cm[0,1]}")
     print(f"  FN={cm[1,0]}  TP={cm[1,1]}")
 
+    # Save misclassified images for review
+    errors = {"false_positives": [], "missed_rejects": []}
+    for i in range(len(y_test)):
+        rel_path = str(paths_test[i].relative_to(image_dir))
+        if y_test[i] == 0 and y_pred[i] == 1:
+            errors["false_positives"].append(rel_path)
+        elif y_test[i] == 1 and y_pred[i] == 0:
+            errors["missed_rejects"].append(rel_path)
+
+    errors_path = output_path.parent / "errors.json"
+    with open(errors_path, "w") as f:
+        json.dump(errors, f, indent=2)
+    print(f"\nFalse positives: {len(errors['false_positives'])}")
+    print(f"Missed rejects: {len(errors['missed_rejects'])}")
+    print(f"Errors saved to {errors_path}")
+
     # Save model
     output_path = Path(args.output)
     with open(output_path, "wb") as f:
         pickle.dump({"classifier": clf, "clip_model": "ViT-B-32", "clip_pretrained": "laion2b_s34b_b79k"}, f)
-    print(f"\nModel saved to {output_path}")
+    print(f"Model saved to {output_path}")
 
     # Save report
     report_path = output_path.with_suffix(".report.txt")
